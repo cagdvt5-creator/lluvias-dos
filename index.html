@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Observatorio de lluvias · Santa Marta 2015–2025</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--bg:#f4f6f3;--card:#fff;--ink:#0f2a3a;--mut:#5b6f7b;--line:#dbe3e0;--rain:#1f62b0;--heat:#d9861a;--cool:#2a9d8f;--front:#6b5bd2;--hero:#0f2a3a;--heroink:#eaf3f1}
+@media(prefers-color-scheme:dark){:root{--bg:#0b1a23;--card:#12262f;--ink:#e7f0ee;--mut:#8ea5ad;--line:#23404b;--rain:#5aa2ee;--heat:#f0a64a;--cool:#4cc3b3;--front:#9a8cf5;--hero:#07131a}}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.55 'IBM Plex Sans',system-ui,sans-serif;padding-bottom:env(safe-area-inset-bottom,0)}
+h1,h2,h3{font-family:'Bricolage Grotesque',system-ui,sans-serif;margin:0;line-height:1.1}
+.hero{background:var(--hero);color:var(--heroink);padding:calc(44px + env(safe-area-inset-top,0px)) 20px 36px}
+.wrap{max-width:1080px;margin:0 auto}
+.hero h1{font-size:clamp(34px,7vw,64px);font-weight:800;letter-spacing:-.02em;max-width:14em}
+.hero p{max-width:40em;color:#b9cfcb;margin:14px 0 0}
+.big{display:flex;gap:28px;flex-wrap:wrap;margin-top:26px}
+.big div b{display:block;font:700 34px 'Bricolage Grotesque',sans-serif;color:#8fd0ff}
+.big div span{font-size:13px;color:#9fb8b5}
+nav{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px);overflow-x:auto;white-space:nowrap}
+nav .wrap{display:flex;gap:4px;padding:0 12px}
+nav a{padding:13px 12px;color:var(--mut);text-decoration:none;font-weight:500;font-size:14px;border-bottom:2px solid transparent}
+nav a:hover,nav a:focus-visible{color:var(--ink);border-color:var(--rain);outline:none}
+section{padding:36px 16px}
+h2{font-size:clamp(24px,4vw,34px);font-weight:700;margin-bottom:6px}
+.lead{color:var(--mut);max-width:44em;margin:0 0 20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px}
+.ch{position:relative;height:320px}
+.row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;align-items:end}
+label{font-size:12px;color:var(--mut);display:flex;flex-direction:column;gap:4px;font-weight:500}
+select,button{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink)}
+button{cursor:pointer;font-weight:600}button:hover{border-color:var(--rain)}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:640px}
+th,td{padding:6px 8px;text-align:right;border-bottom:1px solid var(--line)}th:first-child,td:first-child{text-align:left;font-weight:600}
+td.h{color:var(--ink)}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.note{font-size:13px;color:var(--mut);margin-top:10px}
+.banner{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--heat);border-radius:8px;padding:12px 14px;font-size:13.5px}
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:12px}.vs .card{padding:12px}
+.pos{color:var(--rain);font-weight:600}.neg{color:var(--heat);font-weight:600}
+footer{padding:28px 16px calc(28px + env(safe-area-inset-bottom,0px));color:var(--mut);font-size:13px;border-top:1px solid var(--line)}
+@media(max-width:560px){.ch{height:260px}.vs{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+<h1>Lluvia y temperatura en Santa Marta, 2015–2025</h1>
+<p>Once años de precipitación mensual y diaria, temperatura, frentes fríos y contexto global, con comparador de año contra año y mes contra mes.</p>
+<div class="big" id="kpis"></div>
+</div></header>
+<nav><div class="wrap"><a href="#anual">Año a año</a><a href="#mensual">Mes a mes</a><a href="#diario">Día a día</a><a href="#comparar">Comparar</a><a href="#fuentes">Datos</a></div></nav>
+
+<section><div class="wrap"><div class="banner" id="banner"></div></div></section>
+
+<section id="anual"><div class="wrap">
+<h2>Año a año</h2>
+<p class="lead">Lluvia total anual frente a la anomalía de temperatura global. Los años de El Niño (2015–16, 2023–24) fueron los más secos y los de La Niña (2020–22) los más húmedos.</p>
+<div class="card"><div class="ch"><canvas id="cAnual"></canvas></div></div>
+</div></section>
+
+<section id="mensual"><div class="wrap">
+<h2>Mes a mes</h2>
+<p class="lead">Lluvia acumulada (mm) por mes y año. Cuanto más intenso el azul, más llovió.</p>
+<div class="card scroll"><table id="heat"></table></div>
+<div class="card" style="margin-top:14px"><h3 style="font-size:18px;margin-bottom:10px">Promedio mensual 2015–2025</h3><div class="ch"><canvas id="cClima"></canvas></div></div>
+</div></section>
+
+<section id="diario"><div class="wrap">
+<h2>Día a día</h2>
+<p class="lead">Temperatura máxima y mínima, lluvia diaria y días con frente frío.</p>
+<div class="row"><label>Año<select id="dY"></select></label><label>Mes<select id="dM"></select></label></div>
+<div class="card"><div class="ch" style="height:360px"><canvas id="cDia"></canvas></div><div class="note" id="dNote"></div></div>
+</div></section>
+
+<section id="comparar"><div class="wrap">
+<h2>Comparar</h2>
+<p class="lead">Elige dos períodos. Con «Todo el año» comparas año contra año; con un mes concreto comparas mes contra mes.</p>
+<div class="vs">
+<div class="card"><b>Período A</b><div class="row" style="margin:8px 0 0"><label>Año<select id="aY"></select></label><label>Mes<select id="aM"></select></label></div></div>
+<div class="card"><b>Período B</b><div class="row" style="margin:8px 0 0"><label>Año<select id="bY"></select></label><label>Mes<select id="bM"></select></label></div></div>
+</div>
+<div class="grid" style="margin-top:14px">
+<div class="card"><h3 style="font-size:18px;margin-bottom:10px">Lluvia (mm)</h3><div class="ch"><canvas id="cvR"></canvas></div></div>
+<div class="card"><h3 style="font-size:18px;margin-bottom:10px">Temperatura máxima (°C)</h3><div class="ch"><canvas id="cvT"></canvas></div></div>
+</div>
+<div class="card scroll" style="margin-top:14px"><table id="cmpT"></table></div>
+</div></section>
+
+<section id="fuentes"><div class="wrap">
+<h2>Datos y método</h2>
+<p class="lead">Coordenadas de referencia: 11.24° N, 74.20° O. Los frentes fríos se marcan en diciembre–febrero, cuando los vientos del norte se intensifican en el Caribe colombiano. La anomalía global es una referencia aproximada basada en series públicas (NASA GISS).</p>
+<div class="row"><button id="bReal">Cargar datos reales (Open-Meteo)</button><button id="bSim">Volver a datos de demostración</button></div>
+<div class="note" id="status"></div>
+</div></section>
+<footer><div class="wrap">Observatorio de lluvias de Santa Marta. Verifica con IDEAM para uso oficial.</div></footer>
+
+<script>
+const MN=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const YRS=[2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025];
+const ENSO={2015:'El Niño',2016:'El Niño',2017:'Neutro',2018:'La Niña débil',2019:'Neutro',2020:'La Niña',2021:'La Niña',2022:'La Niña',2023:'El Niño',2024:'El Niño',2025:'Neutro'};
+const GT={2015:.90,2016:1.01,2017:.92,2018:.85,2019:.98,2020:1.02,2021:.85,2022:.89,2023:1.17,2024:1.28,2025:1.20};
+const YF={2015:.75,2016:.8,2017:1.1,2018:.95,2019:.85,2020:1.3,2021:1.2,2022:1.25,2023:.8,2024:.7,2025:1};
+const BASE=[2,2,5,25,100,60,45,90,130,190,100,25];
+let D=[],real=false,charts={};
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const rng=s=>()=>(s=(s*1664525+1013904223)>>>0)/4294967296;
+const sum=a=>a.reduce((x,y)=>x+y,0), avg=a=>a.length?sum(a)/a.length:0;
+
+function synth(){
+ const o=[];
+ YRS.forEach(y=>{const R=rng(y*7919);
+  for(let m=0;m<12;m++){
+   const n=new Date(y,m+1,0).getDate(), tgt=BASE[m]*YF[y]*(.7+R()*.6), raw=[];
+   const p=Math.min(.75,BASE[m]/110+.04);
+   for(let d=0;d<n;d++)raw.push(R()<p?-Math.log(1-R())*(1+BASE[m]/60):0);
+   let s=sum(raw); if(!s){raw[Math.floor(R()*n)]=1;s=1}
+   const k=tgt/s, an=(ENSO[y]=='El Niño'?.5:ENSO[y]=='La Niña'?-.2:0);
+   for(let d=0;d<n;d++){
+    const f=(m==11||m<2)&&R()<.07?1:0;
+    const tx=31+1.2*Math.cos((m-5)*Math.PI/6)+an+(R()-.5)*1.6-(f?1.2:0)-Math.min(2,raw[d]*k*.06);
+    o.push({y,m,d:d+1,r:+(raw[d]*k).toFixed(1),tx:+tx.toFixed(1),tn:+(tx-7.2+(R()-.5)*1.2-(f?.3:0)).toFixed(1),f});
+   }}});
+ return o;
+}
+function sel(y,m){return D.filter(r=>(y==null||r.y==y)&&(m==null||m<0||r.m==m))}
+function st(y,m){const a=sel(y,m);return{r:sum(a.map(x=>x.r)),dias:a.filter(x=>x.r>=1).length,tx:avg(a.map(x=>x.tx)),tn:avg(a.map(x=>x.tn)),f:sum(a.map(x=>x.f)),max:Math.max(0,...a.map(x=>x.r))}}
+function mk(id,cfg){charts[id]&&charts[id].destroy();Chart.defaults.color=css('--mut');Chart.defaults.font.family="'IBM Plex Sans',sans-serif";
+ cfg.options=Object.assign({responsive:true,maintainAspectRatio:false},cfg.options||{});
+ charts[id]=new Chart(document.getElementById(id),cfg)}
+const grid={color:css('--line')};
+
+function render(){
+ const tot=YRS.map(y=>st(y).r), iw=tot.indexOf(Math.max(...tot)), id=tot.indexOf(Math.min(...tot));
+ document.getElementById('kpis').innerHTML=
+  `<div><b>${Math.round(avg(tot))} mm</b><span>lluvia anual promedio</span></div>
+   <div><b>${YRS[iw]}</b><span>año más lluvioso (${Math.round(tot[iw])} mm)</span></div>
+   <div><b>${YRS[id]}</b><span>año más seco (${Math.round(tot[id])} mm)</span></div>
+   <div><b>${avg(D.map(x=>x.tx)).toFixed(1)} °C</b><span>máxima media diaria</span></div>`;
+ document.getElementById('banner').innerHTML=real?'<b>Datos reales</b> de Open-Meteo (reanálisis ERA5). Los frentes fríos siguen siendo una estimación.':'<b>Datos de demostración.</b> Reproducen el patrón climático de Santa Marta (temporada seca de diciembre a abril, lluvias fuertes de septiembre a noviembre) pero no son mediciones. Usa «Cargar datos reales» al final de la página.';
+ mk('cAnual',{data:{labels:YRS,datasets:[
+  {type:'bar',label:'Lluvia anual (mm)',data:tot.map(Math.round),backgroundColor:css('--rain'),borderRadius:4,yAxisID:'y'},
+  {type:'line',label:'Anomalía global (°C)',data:YRS.map(y=>GT[y]),borderColor:css('--heat'),backgroundColor:css('--heat'),tension:.3,yAxisID:'y1'}]},
+  options:{scales:{y:{grid,title:{display:true,text:'mm'}},y1:{position:'right',grid:{display:false},min:.6,max:1.4,title:{display:true,text:'°C'}},x:{grid:{display:false}}}}});
+ // heatmap
+ const mx=Math.max(...YRS.flatMap(y=>MN.map((_,m)=>st(y,m).r)));
+ let h='<tr><th>Año</th>'+MN.map(x=>`<th>${x}</th>`).join('')+'<th>Total</th></tr>';
+ YRS.forEach(y=>{h+=`<tr><td>${y}</td>`+MN.map((_,m)=>{const v=st(y,m).r;return `<td class="h" style="background:color-mix(in srgb,var(--rain) ${Math.round(v/mx*85)}%,transparent)">${Math.round(v)}</td>`}).join('')+`<td>${Math.round(st(y).r)}</td></tr>`});
+ document.getElementById('heat').innerHTML=h;
+ mk('cClima',{type:'bar',data:{labels:MN,datasets:[
+  {label:'Lluvia media (mm)',data:MN.map((_,m)=>avg(YRS.map(y=>st(y,m).r)).toFixed(0)),backgroundColor:css('--rain'),borderRadius:4,yAxisID:'y'},
+  {type:'line',label:'Máx. media (°C)',data:MN.map((_,m)=>avg(YRS.map(y=>st(y,m).tx)).toFixed(1)),borderColor:css('--heat'),backgroundColor:css('--heat'),yAxisID:'y1',tension:.3}]},
+  options:{scales:{y:{grid},y1:{position:'right',grid:{display:false},min:28,max:34},x:{grid:{display:false}}}}});
+ dia();cmp();
+}
+function dia(){
+ const y=+dY.value,m=+dM.value,a=sel(y,m),s=st(y,m);
+ mk('cDia',{data:{labels:a.map(x=>x.d),datasets:[
+  {type:'bar',label:'Lluvia (mm)',data:a.map(x=>x.r),backgroundColor:css('--rain'),yAxisID:'y1',order:3},
+  {type:'line',label:'Máxima (°C)',data:a.map(x=>x.tx),borderColor:css('--heat'),backgroundColor:css('--heat'),pointRadius:2,tension:.25,yAxisID:'y'},
+  {type:'line',label:'Mínima (°C)',data:a.map(x=>x.tn),borderColor:css('--cool'),backgroundColor:css('--cool'),pointRadius:2,tension:.25,yAxisID:'y'},
+  {type:'line',label:'Frente frío',data:a.map(x=>x.f?x.tx:null),showLine:false,pointStyle:'triangle',pointRadius:8,backgroundColor:css('--front'),borderColor:css('--front'),yAxisID:'y'}]},
+  options:{scales:{y:{grid,title:{display:true,text:'°C'}},y1:{position:'right',grid:{display:false},beginAtZero:true,title:{display:true,text:'mm'}},x:{grid:{display:false}}}}});
+ dNote.textContent=`${MN[m]} ${y}: ${s.r.toFixed(0)} mm en ${s.dias} días con lluvia, máxima media ${s.tx.toFixed(1)} °C, mínima media ${s.tn.toFixed(1)} °C, ${s.f} días con frente frío.`;
+}
+function series(y,m){
+ if(m<0)return{l:MN,r:MN.map((_,i)=>st(y,i).r),t:MN.map((_,i)=>st(y,i).tx)};
+ const a=sel(y,m);return{l:a.map(x=>x.d),r:a.map(x=>x.r),t:a.map(x=>x.tx)};
+}
+function cmp(){
+ const A=[+aY.value,+aM.value],B=[+bY.value,+bM.value],sa=series(...A),sb=series(...B);
+ const nm=p=>p[1]<0?`${p[0]}`:`${MN[p[1]]} ${p[0]}`;
+ const ds=(k,t)=>[{label:nm(A),data:sa[k],backgroundColor:css('--rain'),borderColor:css('--rain')},{label:nm(B),data:sb[k],backgroundColor:css('--heat'),borderColor:css('--heat')}].map(o=>t=='line'?Object.assign(o,{tension:.25,pointRadius:2}):o);
+ const L=sa.l.length>=sb.l.length?sa.l:sb.l;
+ mk('cvR',{type:'bar',data:{labels:L,datasets:ds('r')},options:{scales:{y:{grid,beginAtZero:true},x:{grid:{display:false}}}}});
+ mk('cvT',{type:'line',data:{labels:L,datasets:ds('t','line')},options:{scales:{y:{grid},x:{grid:{display:false}}}}});
+ const a=st(...A),b=st(...B);
+ const row=(n,f,u)=>{const d=f(a)-f(b),p=f(b)?d/f(b)*100:0;return `<tr><td>${n}</td><td>${f(a).toFixed(1)}${u}</td><td>${f(b).toFixed(1)}${u}</td><td class="${d>=0?'pos':'neg'}">${d>=0?'+':''}${d.toFixed(1)}${u}${u=='%'?'':` (${p>=0?'+':''}${p.toFixed(0)}%)`}</td></tr>`};
+ cmpT.innerHTML=`<tr><th>Indicador</th><th>${nm(A)}</th><th>${nm(B)}</th><th>A − B</th></tr>`+
+  row('Lluvia total (mm)',s=>s.r,'')+row('Días con lluvia',s=>s.dias,'')+row('Lluvia máx. en un día (mm)',s=>s.max,'')+row('Máxima media (°C)',s=>s.tx,'')+row('Mínima media (°C)',s=>s.tn,'')+row('Días con frente frío',s=>s.f,'')+
+  `<tr><td>Fase ENSO</td><td>${ENSO[A[0]]}</td><td>${ENSO[B[0]]}</td><td></td></tr><tr><td>Anomalía global (°C)</td><td>${GT[A[0]]}</td><td>${GT[B[0]]}</td><td></td></tr>`;
+}
+function fill(){
+ const yo=YRS.map(y=>`<option>${y}</option>`).join(''),mo=MN.map((x,i)=>`<option value="${i}">${x}</option>`).join('');
+ dY.innerHTML=yo;dM.innerHTML=mo;dY.value=2022;dM.value=9;
+ [aY,bY].forEach(e=>e.innerHTML=yo);[aM,bM].forEach(e=>e.innerHTML='<option value="-1">Todo el año</option>'+mo);
+ aY.value=2020;bY.value=2023;aM.value=bM.value=-1;
+ [dY,dM].forEach(e=>e.onchange=dia);[aY,aM,bY,bM].forEach(e=>e.onchange=cmp);
+}
+bSim.onclick=()=>{D=synth();real=false;status.textContent='Mostrando datos de demostración.';render()};
+bReal.onclick=async()=>{
+ status.textContent='Descargando 2015–2025…';
+ try{
+  const u='https://archive-api.open-meteo.com/v1/archive?latitude=11.2408&longitude=-74.199&start_date=2015-01-01&end_date=2025-12-31&daily=precipitation_sum,temperature_2m_max,temperature_2m_min&timezone=America%2FBogota';
+  const j=await (await fetch(u)).json(),q=j.daily,R=rng(99),o=[];
+  q.time.forEach((t,i)=>{const [y,m,d]=t.split('-').map(Number);if(q.temperature_2m_max[i]==null)return;
+   const f=(m==12||m<3)&&R()<.07?1:0;
+   o.push({y,m:m-1,d,r:q.precipitation_sum[i]||0,tx:q.temperature_2m_max[i],tn:q.temperature_2m_min[i],f})});
+  D=o;real=true;status.textContent=`Datos reales cargados: ${o.length} días.`;render();
+ }catch(e){status.textContent='No se pudo descargar. Revisa tu conexión e inténtalo de nuevo.'}
+};
+D=synth();fill();render();
+</script>
+</body>
+</html>
